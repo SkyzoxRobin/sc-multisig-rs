@@ -1,4 +1,4 @@
-use crate::action::{Action, CallActionData};
+use crate::action::{Action, CallActionData, CallEsdtActionData};
 
 elrond_wasm::imports!();
 
@@ -80,6 +80,41 @@ pub trait MultisigProposeModule: crate::multisig_state::MultisigStateModule {
     ) -> SCResult<usize> {
         let call_data = self.prepare_call_data(to, egld_amount, opt_function, arguments);
         self.propose_action(Action::SendTransferExecute(call_data))
+    }
+
+    fn prepare_transfer_esdt_data(
+        &self,
+        to: ManagedAddress,
+        token: TokenIdentifier,
+        amount: BigUint,
+        opt_function: OptionalArg<ManagedBuffer>,
+        arguments: ManagedVarArgs<ManagedBuffer>,
+    ) -> CallEsdtActionData<Self::Api> {
+        let endpoint_name = match opt_function {
+            OptionalArg::Some(data) => data,
+            OptionalArg::None => ManagedBuffer::new(),
+        };
+        CallEsdtActionData {
+            to,
+            token,
+            amount,
+            endpoint_name,
+            arguments: arguments.into_vec_of_buffers(),
+        }
+    }
+
+    // Altenative to propose async call to send ESDT
+    #[endpoint(proposeEsdtTransferExecute)]
+    fn propose_esdt_transfer_execute(
+        &self,
+        to: ManagedAddress,
+        token: TokenIdentifier,
+        amount: BigUint,
+        #[var_args] opt_function: OptionalArg<ManagedBuffer>,
+        #[var_args] arguments: ManagedVarArgs<ManagedBuffer>,
+    ) -> SCResult<usize> {
+        let call_data = self.prepare_transfer_esdt_data(to, token, amount, opt_function, arguments);
+        self.propose_action(Action::SendEsdtTransferExecute(call_data))
     }
 
     /// Propose a transaction in which the contract will perform a transfer-execute call.
