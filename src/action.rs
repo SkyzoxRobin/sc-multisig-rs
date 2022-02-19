@@ -2,7 +2,7 @@ use elrond_wasm::{
     api::{CallTypeApi, EndpointFinishApi, ManagedTypeApi, StorageWriteApi},
     io::EndpointResult,
     types::{
-        AsyncCall, BigUint, CodeMetadata, ManagedAddress, ManagedBuffer, ManagedVec, OptionalResult,
+        AsyncCall, BigUint, CodeMetadata, ManagedAddress, ManagedBuffer, ManagedVec, OptionalResult, TokenIdentifier,
     },
 };
 
@@ -16,6 +16,15 @@ pub struct CallActionData<M: ManagedTypeApi> {
     pub arguments: ManagedVec<M, ManagedBuffer<M>>,
 }
 
+#[derive(NestedEncode, NestedDecode, TypeAbi)]
+pub struct CallEsdtActionData<M: ManagedTypeApi> {
+    pub to: ManagedAddress<M>,
+    pub token: TokenIdentifier<M>,
+    pub amount: BigUint<M>,
+    pub endpoint_name: ManagedBuffer<M>,
+    pub arguments: ManagedVec<M, ManagedBuffer<M>>,
+}
+
 #[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi)]
 pub enum Action<M: ManagedTypeApi> {
     Nothing,
@@ -24,6 +33,7 @@ pub enum Action<M: ManagedTypeApi> {
     RemoveUser(ManagedAddress<M>),
     ChangeQuorum(usize),
     SendTransferExecute(CallActionData<M>),
+    SendEsdtTransferExecute(CallEsdtActionData<M>),
     SendAsyncCall(CallActionData<M>),
     SCDeployFromSource {
         amount: BigUint<M>,

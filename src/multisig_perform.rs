@@ -152,6 +152,20 @@ pub trait MultisigPerformModule: crate::multisig_state::MultisigStateModule {
                 }
                 Ok(PerformActionResult::Nothing)
             },
+            Action::SendEsdtTransferExecute(call_data) => {
+                let result = Self::Api::send_api_impl().direct_esdt_execute(
+                    &call_data.to,
+                    &call_data.token,
+                    &call_data.amount,
+                    self.gas_for_transfer_exec(),
+                    &call_data.endpoint_name,
+                    &call_data.arguments.into(),
+                );
+                if let Result::Err(e) = result {
+                    Self::Api::error_api_impl().signal_error(e);
+                }
+                Ok(PerformActionResult::Nothing)
+            },
             Action::SendAsyncCall(call_data) => {
                 let contract_call_raw = self
                     .send()
